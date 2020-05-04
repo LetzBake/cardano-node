@@ -42,7 +42,6 @@ import qualified Options.Applicative as Opt
 import           Ouroboros.Consensus.BlockchainTime (SystemStart (..))
 
 import           Prelude (String)
-import qualified Prelude
 
 
 --
