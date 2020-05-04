@@ -45,6 +45,7 @@ module Cardano.Api.Types
   , ShelleySigningKey
   , ShelleyAddress
   , ShelleyCredential
+  , ShelleyDelegationCertificate
   , ShelleyTxBody
   , ShelleyTx
   , ShelleyTxId
@@ -97,7 +98,8 @@ type ShelleyTxBody          = Shelley.TxBody Shelley.TPraosStandardCrypto
 type ShelleyTx              = Shelley.Tx     Shelley.TPraosStandardCrypto
 type ShelleyTxId            = Shelley.TxId   Shelley.TPraosStandardCrypto
 type ShelleyWitnessVKey     = Shelley.WitVKey Shelley.TPraosStandardCrypto
-type ShelleyDelegationCertificate = Shelley.DCert   Shelley.TPraosStandardCrypto
+type ShelleyDelegationCertificate = Shelley.DCert Shelley.TPraosStandardCrypto
+type ShelleyPoolCertificate       = Shelley.PoolCert Shelley.TPraosStandardCrypto
 type ShelleyCredential            = Shelley.Credential Shelley.TPraosStandardCrypto
 
 -- The 'Address' data type in 'cardano-sl' is a design train wreck.
@@ -112,6 +114,7 @@ data Address
 data Certificate
   = ByronCertificate
   | ShelleyDelegationCertificate !ShelleyDelegationCertificate
+  | ShelleyPoolCertificate !ShelleyPoolCertificate
 
 -- | The combination of a verification key and a signing key.
 --

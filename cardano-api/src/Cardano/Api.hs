@@ -96,6 +96,14 @@ shelleyGenSigningKey :: IO SigningKey
 shelleyGenSigningKey =
     SigningKeyShelley . Shelley.SKey <$> runSecureRandom genKeyDSIGN
 
+-- | Register a shelley staking pool.
+shelleyRegisterStakePool :: Certificate
+shelleyRegisterStakePool = undefined
+
+-- | Retire a shelley staking pool.
+shelleyRetireStakePool :: Certificate
+shelleyRetireStakePool = undefined
+
 -- | Register a shelley staking key.
 shelleyRegisterStakingKey
   :: (SigningKey, VerificationKey)
@@ -197,20 +205,30 @@ buildByronTransaction ins outs =
     bTxHash = coerce $ Crypto.hashRaw (LBS.fromStrict bTxCbor)
 
 
-buildShelleyTransaction :: [TxIn] -> [TxOut] -> SlotNo -> Lovelace -> TxUnsigned
-buildShelleyTransaction txins txouts ttl fee =
-    TxUnsignedShelley $
-      Shelley.TxBody
-        (Set.fromList (map toShelleyTxIn  txins))
-        (Seq.fromList (map toShelleyTxOut txouts))
-        Seq.empty                -- certificates
-        (Shelley.Wdrl Map.empty) -- withdrawals
-        (toShelleyLovelace fee)
-        ttl
-        Shelley.SNothing         -- update proposals
-        Shelley.SNothing         -- metadata hash
-
-
+buildShelleyTransaction
+  :: [TxIn]
+  -> [TxOut]
+  -> SlotNo
+  -> Lovelace
+  -> [Certificate]
+  -> TxUnsigned
+buildShelleyTransaction txins txouts ttl fee certs = do
+  let relevantCerts = catMaybes [ certDiscrim c | c <- certs ]
+  TxUnsignedShelley $
+    Shelley.TxBody
+      (Set.fromList (map toShelleyTxIn  txins))
+      (Seq.fromList (map toShelleyTxOut txouts))
+      (Seq.fromList relevantCerts)  -- certificates
+      (Shelley.Wdrl Map.empty)      -- withdrawals
+      (toShelleyLovelace fee)
+      ttl
+      Shelley.SNothing              -- update proposals
+      Shelley.SNothing              -- metadata hash
+ where
+   -- We only want certificates relevant to shelley.
+   certDiscrim :: Certificate -> Maybe ShelleyDelegationCertificate
+   certDiscrim ByronCertificate = Nothing
+   certDiscrim (ShelleyDelegationCertificate delegCert) = Just delegCert
 {-
 inputs outputs, attributes:
 ATxAux { Tx TxWiness Annotation }
