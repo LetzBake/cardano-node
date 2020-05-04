@@ -45,6 +45,10 @@ module Cardano.Api
   , witnessTransaction
   , signTransactionWithWitness
   , submitTransaction
+
+  , shelleyDeregisterStakingKey
+  , shelleyDelegateStake
+  , shelleyRegisterStakingKey
   ) where
 
 import           Cardano.Prelude
@@ -91,6 +95,39 @@ byronGenSigningKey =
 shelleyGenSigningKey :: IO SigningKey
 shelleyGenSigningKey =
     SigningKeyShelley . Shelley.SKey <$> runSecureRandom genKeyDSIGN
+
+-- | Register a shelley staking key.
+shelleyRegisterStakingKey
+  :: (SigningKey, VerificationKey)
+  -> Certificate
+shelleyRegisterStakingKey keyPair = do
+  let cred = mkShelleyCredential keyPair
+  ShelleyDelegationCertificate $ Shelley.DCertDeleg $ Shelley.RegKey cred
+shelleyRegisterDelegationCertificate _ = panic "Cardano.Api.shelleyRegisterStakingKey: Please use a shelley key pair."
+
+-- | Deregister a shelley staking key.
+shelleyDeregisterStakingKey
+  :: (SigningKey, VerificationKey)
+  -> Certificate
+shelleyDeregisterStakingKey keyPair = do
+  let cred = mkShelleyCredential keyPair
+  ShelleyDelegationCertificate $ Shelley.DCertDeleg $ Shelley.DeRegKey cred
+shelleyDeregisterDelegationCertificate _ = panic "Cardano.Api.shelleyDeregisterStakingKey: Please use a shelley key pair."
+
+-- | Delegate your stake (as the delegator) to a specified delegatee.
+shelleyDelegateStake
+  :: (SigningKey, VerificationKey)
+  -> VerificationKey
+  -> Certificate
+shelleyDelegateStake delegatorKeyPair (VerificationKeyShelley delegateeVKey) = do
+  let cred = mkShelleyCredential delegatorKeyPair
+  ShelleyDelegationCertificate $ Shelley.DCertDeleg $ Shelley.Delegate $ Shelley.Delegation cred (Shelley.hashKey delegateeVKey)
+shelleyStakeDelegationCertificate _ _ = panic "Cardano.Api.shelleyDelegateStake Please use a shelley key pair."
+
+mkShelleyCredential :: (SigningKey, VerificationKey) -> ShelleyCredential
+mkShelleyCredential (SigningKeyShelley sKey, VerificationKeyShelley vKey) =
+  Shelley.toCred $ Shelley.KeyPair vKey sKey
+mkShelleyCredential _ = panic "Cardano.Api.mkShelleyCredential: Please use a shelley key pair."
 
 -- Given key information (public key, and other network parameters), generate an Address.
 -- Originally: mkAddress :: Network -> VerificationKey -> VerificationKeyInfo -> Address
