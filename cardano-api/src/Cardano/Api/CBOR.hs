@@ -70,6 +70,8 @@ certificateFromCBOR bs =
       case tag of
         180 -> ShelleyDelegationCertificate <$> fromCBOR
         181 -> ShelleyStakePoolCertificate <$> fromCBOR
+        182 -> ShelleyGenesisDelegationCertificate <$> fromCBOR
+        183 -> ShelleyMIRCertificate <$> fromCBOR
         _ -> cborError $ DecoderErrorUnknownTag "ShelleyCertificate" tag
 
 certificateToCBOR :: Certificate -> ByteString
@@ -78,7 +80,8 @@ certificateToCBOR sc =
     case sc of
       ShelleyDelegationCertificate cert -> mconcat [ toCBOR (180 :: Word8) , toCBOR cert]
       ShelleyStakePoolCertificate cert -> mconcat [ toCBOR (181 :: Word8) , toCBOR cert]
-
+      ShelleyGenesisDelegationCertificate cert -> mconcat [ toCBOR (182 :: Word8), toCBOR cert ]
+      ShelleyMIRCertificate cert -> mconcat [ toCBOR (183 :: Word8), toCBOR cert ]
 
 signingKeyFromCBOR :: ByteString -> Either ApiError SigningKey
 signingKeyFromCBOR bs =
