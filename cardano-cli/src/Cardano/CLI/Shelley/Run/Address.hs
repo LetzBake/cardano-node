@@ -16,8 +16,11 @@ import           Cardano.CLI.Ops (CliError (..))
 import           Cardano.CLI.Shelley.Parsers
                    (SigningKeyFile (..), VerificationKeyFile (..),
                     AddressCmd(..))
+import           Cardano.CLI.Shelley.Run.Address.Describe (runAddressDescribe)
 
 import qualified Cardano.Crypto.Hash.Class as Crypto
+
+import qualified Data.Text.Encoding as Text
 
 import qualified Shelley.Spec.Ledger.Keys as Ledger
 --TODO: provide address rendering from the main API
@@ -31,7 +34,7 @@ runAddressCmd (AddressKeyGen  vkf skf) = runAddressKeyGen  vkf skf
 runAddressCmd (AddressKeyHash vkf)     = runAddressKeyHash vkf
 runAddressCmd (AddressBuild   vkf)     = runAddressBuild   vkf
 runAddressCmd AddressBuildMultiSig{}   = runAddressBuildMultiSig
-
+runAddressCmd (AddressDescribe txt)    = runAddressDescribe (Text.encodeUtf8 txt)
 
 runAddressKeyGen :: VerificationKeyFile -> SigningKeyFile -> ExceptT CliError IO ()
 runAddressKeyGen (VerificationKeyFile vkeyPath) (SigningKeyFile skeyPath) = do
