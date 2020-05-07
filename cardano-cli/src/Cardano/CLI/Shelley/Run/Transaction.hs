@@ -8,9 +8,10 @@ module Cardano.CLI.Shelley.Run.Transaction
 import           Cardano.Prelude
 
 import           Cardano.Api hiding (readSigningKey)
-import           Cardano.Config.Shelley.ColdKeys (KeyRole (..), readSigningKey)
 import           Cardano.CLI.Ops (CliError (..))
 import           Cardano.CLI.Shelley.Parsers
+import           Cardano.Config.Shelley.ColdKeys (KeyRole (..), readSigningKey)
+import           Cardano.Config.Types (CLISocketPath (..))
 
 import           Control.Monad.Trans.Except (ExceptT)
 import           Control.Monad.Trans.Except.Extra (firstExceptT, newExceptT)
@@ -23,8 +24,12 @@ runTransactionCmd cmd =
       runTxBuildRaw txins txouts ttl fee out
     TxSign txinfile skfiles mNetwork txoutfile ->
       runTxSign txinfile skfiles (maybe Mainnet Testnet mNetwork) txoutfile
+    TxSubmit txfile socket ->
+      runTxSubmit txfile socket
 
     _ -> liftIO $ putStrLn $ "runTransactionCmd: " ++ show cmd
+
+-- -------------------------------------------------------------------------------------------------
 
 runTxBuildRaw :: [TxIn] -> [TxOut] -> SlotNo -> Lovelace -> TxBodyFile -> ExceptT CliError IO ()
 runTxBuildRaw txins txouts ttl amount (TxBodyFile fpath) =
@@ -43,11 +48,20 @@ runTxSign (TxBodyFile infile) skfiles  network (TxFile outfile) = do
       . writeTxSigned outfile
       $ signTransaction txu network sks
 
+runTxSubmit :: TxFile -> CLISocketPath -> ExceptT CliError IO ()
+runTxSubmit (TxFile infile) (CLISocketPath socket) = undefined infile socket
+
+
+submitTransaction :: NodeApiEnv -> TxSigned -> IO TxSubmitStatus
+
+
+-- -------------------------------------------------------------------------------------------------
 
 -- TODO : This is nuts. The 'cardano-api' and 'cardano-config' packages both have functions
 -- for reading/writing keys, but they are incompatible.
 -- The 'config' version just operates on Shelley only 'SignKey's, but 'api' operates on
--- 'SigningKey's which have a Byron and a Shelley constructor.
+-- 'SigningKey's which have a Byron and a Shelley constructor and therefore an extra
+-- 'Word8' tag to differentiate them.
 readSigningKeyFiles :: [SigningKeyFile] -> ExceptT CliError IO [SigningKey]
 readSigningKeyFiles files =
   newExceptT $ do

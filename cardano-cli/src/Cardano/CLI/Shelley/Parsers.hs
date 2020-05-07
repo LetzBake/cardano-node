@@ -33,7 +33,7 @@ import           Cardano.Common.Parsers (parseConfigFile, parseCLISocketPath, pa
 import qualified Cardano.Crypto as Byron
 import           Cardano.Slotting.Slot (EpochNo (..))
 
-import           Cardano.Config.Types (CLISocketPath, ConfigYamlFilePath (..), NodeAddress,
+import           Cardano.Config.Types (CLISocketPath (..), ConfigYamlFilePath (..), NodeAddress,
                      SigningKeyFile(..))
 import           Cardano.Config.Shelley.OCert (KESPeriod(..))
 import           Cardano.CLI.Key (VerificationKeyFile(..))
@@ -91,7 +91,7 @@ data TransactionCmd
   | TxWitness       -- { transaction :: Transaction, key :: PrivKeyFile, nodeAddr :: NodeAddress }
   | TxSignWitness   -- { transaction :: Transaction, witnesses :: [Witness], nodeAddr :: NodeAddress }
   | TxCheck         -- { transaction :: Transaction, nodeAddr :: NodeAddress }
-  | TxSubmit        -- { transaction :: Transaction, nodeAddr :: NodeAddress }
+  | TxSubmit TxFile CLISocketPath
   | TxInfo          -- { transaction :: Transaction, nodeAddr :: NodeAddress }
   deriving (Eq, Show)
 
@@ -341,7 +341,10 @@ pTransaction =
     pTransactionCheck = pure TxCheck
 
     pTransactionSubmit  :: Parser TransactionCmd
-    pTransactionSubmit = pure TxSubmit
+    pTransactionSubmit =
+      TxSubmit
+        <$> pTxFile Output
+        <*> pCLISocketPath "Socket of submission node"
 
     pTransactionInfo  :: Parser TransactionCmd
     pTransactionInfo = pure TxInfo
@@ -837,3 +840,12 @@ pAddressFile fdir =
       <> Opt.metavar "FILEPATH"
       <> Opt.help (show fdir ++ " filepath of the Address.")
       )
+
+pCLISocketPath :: String -> Parser CLISocketPath
+pCLISocketPath helpMessage =
+  CLISocketPath <$> Opt.strOption
+    (  Opt.long "socket"
+    <> Opt.help helpMessage
+    <> Opt.completer (Opt.bashCompleter "file")
+    <> Opt.metavar "FILEPATH"
+    )
